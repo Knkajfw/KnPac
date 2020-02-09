@@ -1,4 +1,5 @@
-// Author: iBug
+// Author: iBug <ibugone.com>
+// Time: @@TIME@@
 
 function belongsToSubnet(host, list) {
   var ip = host.split(".");
@@ -23,18 +24,34 @@ function belongsToSubnet(host, list) {
   return (masked ^ list[x][0]) == 0;
 }
 
+function isChina(host) {
+  return belongsToSubnet(host, CHINA);
+}
+
+function isLan(host) {
+  return belongsToSubnet(host, LAN);
+}
+
 var proxy = "__PROXY__";
 var direct = "DIRECT";
 
 function FindProxyForURL(url, host) {
+  if (!isResolvable(host)) {
+    return proxy;
+  }
   var remote = dnsResolve(host);
-  if (belongsToSubnet(remote, WHITELIST)) {
-      return direct;
+  if (isLan(remote) || isChina(remote)) {
+    return direct;
   }
   return proxy;
 }
 
-// Format: [Hex IP, mask]
-// e.g. 1.0.1.0/24 = [0x80008000, 0xFFFFFF00]
-// Source: http://www.ipdeny.com/ipblocks/data/aggregated/cn-aggregated.zone
+var LAN = [
+  [0x0A000000, 0xFF000000], // 10.0.0.0/8
+  [0x64400000, 0xFFFF0000], // 100.64.0.0/16
+  [0x7F000000, 0xFF000000], // 127.0.0.0/8
+  [0xA9FE0000, 0xFFFF0000], // 169.254.0.0/16
+  [0xAC100000, 0xFFF00000], // 172.16.0.0/12
+  [0xC0A80000, 0xFFFF0000]  // 192.168.0.0/16
+];
 
